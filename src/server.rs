@@ -45,6 +45,11 @@ impl<I, O> Context<I, O> where
 		self.get_mut().send(msg)
 	}
 
+	/// Sends bytes over TCP.
+	pub fn send_raw(&mut self, data: &[u8]) -> Res<()> {
+		self.get_mut().send_raw(data)
+	}
+
 	/// Sends a message to all connections. The message is only serialized once.
 	pub fn broadcast<IntoO: Into<O>>(&mut self, msg: IntoO) -> Res<()> {
 		let mut data = vec![];
@@ -165,9 +170,6 @@ impl<I, O, C> Server<I, O, C> where
 	*/
 	fn iteration(&mut self) -> Res<()> {
 		while let Ok((stream, _addr)) = self.listener.accept() {
-			#[cfg(feature="tls")]
-			let stream = crate::tls::Transport::from(stream, &self.tls_config)?;
-			#[cfg(not(feature="tls"))]
 			let _ = self.tls_config;
 			let conn = Connection::<I, O>::from(stream)?;
 			self.ctx.push(conn);
